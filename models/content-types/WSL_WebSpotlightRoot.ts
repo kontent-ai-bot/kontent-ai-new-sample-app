@@ -3,7 +3,9 @@ import { type Block_ContentChunk } from './Block_ContentChunk';
 import { type Block_HeroUnit } from './Block_HeroUnit';
 import { type Block_Navigation } from './Block_Navigation';
 import { type Block_VisualContainer } from './Block_VisualContainer';
+import { type SEOMetadata } from '../content-type-snippets/SEOMetadata';
 import { type Testimonial } from './testimonial';
+import { type WSL_EmojiGuideline } from '../content-type-snippets/WSL_EmojiGuideline';
 import { type WSL_Page } from './WSL_Page';
 
 /**
@@ -47,4 +49,6 @@ export type WSL_WebSpotlightRoot = IContentItem<{
    * Codename: title
    */
   title: Elements.TextElement;
-}>;
+}> &
+  SEOMetadata &
+  WSL_EmojiGuideline;

@@ -10,20 +10,21 @@ import { useSiteCodename } from "../../../../components/shared/siteCodenameConte
 import { AppPage } from "../../../../components/shared/ui/appPage";
 import { mainColorBgClass, mainColorBorderClass, mainColorHoverClass } from "../../../../lib/constants/colors";
 import { ArticlePageSize } from "../../../../lib/constants/paging";
-import { getArticlesCountByCategory, getArticlesForListing, getItemByCodename, getItemsTotalCount, getSiteMenu } from "../../../../lib/kontentClient";
+import { getArticlesCountByCategory, getArticlesForListing, getDefaultMetadata, getItemByCodename, getItemsTotalCount, getSiteMenu } from "../../../../lib/kontentClient";
 import { PerCollectionCodenames } from "../../../../lib/routing";
 import { ValidCollectionCodename } from "../../../../lib/types/perCollection";
 import { ArticleListingUrlQuery, ArticleTypeWithAll, categoryFilterSource, isArticleType } from "../../../../lib/utils/articlesListing";
 import { siteCodename } from "../../../../lib/utils/env";
-import { Article, Block_Navigation, taxonomies, WSL_Page } from "../../../../models";
+import { Article, Block_Navigation, SEOMetadata, taxonomies, WSL_Page } from "../../../../models";
 
 
 type Props = Readonly<{
   siteCodename: ValidCollectionCodename;
   articles: ReadonlyArray<Article>;
-  siteMenu?: Block_Navigation,
+  siteMenu: Block_Navigation | null,
   page: WSL_Page,
   itemCount: number;
+  defaultMetadata: SEOMetadata;
 }>;
 
 type LinkButtonProps = {
@@ -126,6 +127,9 @@ const ArticlesPage: FC<Props> = props => {
     <AppPage
       siteCodename={props.siteCodename}
       siteMenu={props.siteMenu}
+      defaultMetadata={props.defaultMetadata}
+      item={props.page}
+      pageType="WebPage"
     >
       {props.page.elements.content.linkedItems.map(piece => (
         <Content
@@ -235,9 +239,11 @@ export const getStaticProps: GetStaticProps<Props, ArticleListingUrlQuery> = asy
 
   const pageNumber = !pageURLParameter || isNaN(+pageURLParameter) ? 1 : +pageURLParameter;
   const articles = await getArticlesForListing(!!context.preview, pageNumber, selectedCategory);
-  const siteMenu = await getSiteMenu(!!context.preview);
+  const siteMenu = await getSiteMenu(!!context.preview) ?? null;
   const page = await getItemByCodename<WSL_Page>(pageCodename, !!context.preview);
   const itemCount = await getArticlesCountByCategory(false, selectedCategory)
+  const defaultMetadata = await getDefaultMetadata(!!context.preview);
+
   if (page === null) {
     return { notFound: true };
   }
@@ -248,7 +254,8 @@ export const getStaticProps: GetStaticProps<Props, ArticleListingUrlQuery> = asy
       siteCodename,
       siteMenu,
       page,
-      itemCount
+      itemCount,
+      defaultMetadata
     },
     revalidate: 10,
   };

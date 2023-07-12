@@ -6,16 +6,17 @@ import { PersonHorizontal } from "../../components/shared/PersonHorizontal";
 import { RichTextElement } from "../../components/shared/RichTextContent";
 import { AppPage } from "../../components/shared/ui/appPage";
 import { mainColorBgClass } from "../../lib/constants/colors";
-import { getAllArticles, getArticleBySlug, getSiteMenu } from "../../lib/kontentClient";
+import { getAllArticles, getArticleBySlug, getDefaultMetadata, getSiteMenu } from "../../lib/kontentClient";
 import { ValidCollectionCodename } from "../../lib/types/perCollection";
 import { formatDate } from "../../lib/utils/dateTime";
 import { siteCodename } from '../../lib/utils/env';
-import { Article, Block_Navigation } from "../../models"
+import { Article, Block_Navigation, SEOMetadata } from "../../models"
 
 type Props = Readonly<{
   article: Article;
   siteCodename: ValidCollectionCodename;
-  siteMenu?: Block_Navigation;
+  siteMenu: Block_Navigation | null;
+  defaultMetadata: SEOMetadata;
 }>;
 
 const ArticlePage: FC<Props> = props => {
@@ -23,6 +24,9 @@ const ArticlePage: FC<Props> = props => {
     <AppPage
       siteCodename={props.siteCodename}
       siteMenu={props.siteMenu}
+      defaultMetadata={props.defaultMetadata}
+      item={props.article}
+      pageType="Article"
     >
       <HeroImage
         url={props.article.elements.heroImage.value[0]?.url || ""}
@@ -37,7 +41,7 @@ const ArticlePage: FC<Props> = props => {
           </p>
         </div>
       </HeroImage>
-      <div className="max-w-screen-md m-auto">
+      <div className="px-2 max-w-screen m-auto md:px-20">
         {props.article.elements.author.linkedItems[0] && <PersonHorizontal item={props.article.elements.author.linkedItems[0]} />}
         <div className="flex flex-col gap-2">
           <div className="w-fit p-2 bg-gray-800 text-white opacity-90 font-semibold">{props.article.elements.publishingDate.value && formatDate(props.article.elements.publishingDate.value)}</div>
@@ -63,7 +67,7 @@ const ArticlePage: FC<Props> = props => {
 };
 
 export const getStaticProps: GetStaticProps<Props, { slug: string }> = async context => {
-  const siteMenu = await getSiteMenu(!!context.preview);
+  const siteMenu = await getSiteMenu(!!context.preview) ?? null;
   const slug = typeof context.params?.slug === "string" ? context.params.slug : "";
 
   if (!slug) {
@@ -71,6 +75,7 @@ export const getStaticProps: GetStaticProps<Props, { slug: string }> = async con
   }
 
   const article = await getArticleBySlug(slug, !!context.preview);
+  const defaultMetadata = await getDefaultMetadata(!!context.preview);
 
   if (!article) {
     return { notFound: true };
@@ -80,7 +85,8 @@ export const getStaticProps: GetStaticProps<Props, { slug: string }> = async con
     props: {
       article,
       siteCodename,
-      siteMenu
+      siteMenu,
+      defaultMetadata
     },
   };
 }
